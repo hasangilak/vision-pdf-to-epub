@@ -48,17 +48,32 @@ app.add_middleware(
 # ---- API Routes ----
 
 
+QUALITY_PRESETS = {
+    "high": {"render_dpi": 300, "jpeg_quality": 85},
+    "balanced": {"render_dpi": 200, "jpeg_quality": 75},
+    "fast": {"render_dpi": 150, "jpeg_quality": 70},
+}
+
+
 @app.post("/api/jobs")
 async def create_job(
     file: UploadFile,
     language: str = "fa",
     ocr_prompt: str | None = None,
+    quality: str = "balanced",
 ):
     """Upload a PDF and start processing."""
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "File must be a PDF")
 
-    job = Job(language=language, ocr_prompt=ocr_prompt, pdf_filename=file.filename)
+    preset = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["balanced"])
+    job = Job(
+        language=language,
+        ocr_prompt=ocr_prompt,
+        pdf_filename=file.filename,
+        render_dpi=preset["render_dpi"],
+        jpeg_quality=preset["jpeg_quality"],
+    )
     job_registry.create(job)
 
     # Save uploaded PDF

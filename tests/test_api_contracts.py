@@ -88,6 +88,29 @@ class TestApiContracts:
         )
         assert resp.status_code == 400
 
+    async def test_create_job_with_quality_param(
+        self, app_client, tiny_pdf_bytes, mock_ollama
+    ):
+        for quality in ("high", "balanced", "fast"):
+            resp = await app_client.post(
+                "/api/jobs",
+                files={"file": ("test.pdf", io.BytesIO(tiny_pdf_bytes), "application/pdf")},
+                data={"language": "fa", "quality": quality},
+            )
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "job_id" in data
+
+    async def test_create_job_invalid_quality_uses_balanced(
+        self, app_client, tiny_pdf_bytes, mock_ollama
+    ):
+        resp = await app_client.post(
+            "/api/jobs",
+            files={"file": ("test.pdf", io.BytesIO(tiny_pdf_bytes), "application/pdf")},
+            data={"language": "fa", "quality": "invalid"},
+        )
+        assert resp.status_code == 200
+
     async def test_completed_job_download_epub(
         self, app_client, tiny_pdf_bytes, mock_ollama
     ):

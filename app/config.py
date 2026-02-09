@@ -11,10 +11,11 @@ class Settings(BaseSettings):
     ocr_retries: int = 3
 
     # Pipeline
-    render_dpi: int = 300
-    jpeg_quality: int = 85
+    render_dpi: int = 200
+    jpeg_quality: int = 75
+    max_image_dimension: int = 1568
     ocr_workers: int = 2
-    render_queue_size: int = 4
+    render_queue_size: int = 8
     pages_per_chapter: int = 20
 
     # Storage

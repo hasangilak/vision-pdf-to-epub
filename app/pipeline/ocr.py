@@ -52,8 +52,15 @@ async def ocr_page(
                 )
                 resp.raise_for_status()
                 data = resp.json()
-                return data["message"]["content"]
-            except (httpx.HTTPError, KeyError) as exc:
+                if "error" in data:
+                    raise RuntimeError(f"Ollama returned error: {data['error']}")
+                try:
+                    return data["message"]["content"]
+                except KeyError:
+                    raise RuntimeError(
+                        f"Unexpected Ollama response structure: {data}"
+                    )
+            except (httpx.HTTPError, RuntimeError) as exc:
                 last_error = exc
                 wait = 2**attempt
                 logger.warning(

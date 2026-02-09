@@ -24,14 +24,18 @@ export interface RetryResponse {
   retrying_pages: number[];
 }
 
+export type QualityPreset = "high" | "balanced" | "fast";
+
 export async function uploadPdf(
   file: File,
   language: string,
-  ocrPrompt?: string
+  ocrPrompt?: string,
+  quality: QualityPreset = "balanced"
 ): Promise<CreateJobResponse> {
   const form = new FormData();
   form.append("file", file);
   form.append("language", language);
+  form.append("quality", quality);
   if (ocrPrompt) {
     form.append("ocr_prompt", ocrPrompt);
   }

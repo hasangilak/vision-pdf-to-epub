@@ -37,6 +37,8 @@ class Job(BaseModel):
     pages: dict[int, PageResult] = {}
     language: str = "fa"
     ocr_prompt: str | None = None
+    render_dpi: int | None = None
+    jpeg_quality: int | None = None
     created_at: float = Field(default_factory=time.time)
     started_at: float | None = None
     completed_at: float | None = None

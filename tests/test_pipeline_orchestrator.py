@@ -31,6 +31,7 @@ def pipeline_env(tmp_path: Path, monkeypatch):
         ocr_retries=1,
         ocr_workers=2,
         render_queue_size=4,
+        max_image_dimension=0,
         sse_ring_buffer_size=50,
     )
 
@@ -181,3 +182,32 @@ class TestPipelineOrchestrator:
         q = emitter.subscribe()
         sentinel = q.get_nowait()
         assert sentinel is None
+
+    async def test_ollama_error_response_produces_descriptive_errors(
+        self, pipeline_env, tmp_path, tiny_pdf_path, mock_ollama_error_response
+    ):
+        """Ollama returning {"error": "..."} should produce descriptive page errors."""
+        job = _make_job_with_pdf(tmp_path, tiny_pdf_path)
+        emitter = EventEmitter(buffer_size=50)
+
+        await run_pipeline(job, tmp_path, emitter, lambda j: None)
+
+        # All pages should be failed with descriptive error
+        for page in job.pages.values():
+            assert page.status == PageStatus.failed
+            assert "Ollama returned error" in page.error
+            assert "model is busy" in page.error
+
+    async def test_per_job_quality_preset(
+        self, pipeline_env, tmp_path, tiny_pdf_path, mock_ollama, monkeypatch
+    ):
+        """Job with render_dpi/jpeg_quality should use those values."""
+        job = _make_job_with_pdf(tmp_path, tiny_pdf_path)
+        job.render_dpi = 150
+        job.jpeg_quality = 70
+        emitter = EventEmitter(buffer_size=50)
+
+        await run_pipeline(job, tmp_path, emitter, lambda j: None)
+
+        assert job.status == JobStatus.completed
+        assert job.pages_succeeded == 3

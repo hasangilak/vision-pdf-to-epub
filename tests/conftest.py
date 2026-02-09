@@ -46,6 +46,7 @@ def test_settings(tmp_path: Path) -> Settings:
         ocr_retries=1,
         ocr_workers=2,
         render_queue_size=4,
+        max_image_dimension=0,
         sse_ring_buffer_size=50,
         job_ttl_hours=24,
         pdf_ttl_hours=1,
@@ -95,6 +96,19 @@ def mock_ollama_failing():
 
 
 @pytest.fixture
+def mock_ollama_error_response():
+    """respx router — Ollama returns 200 with error JSON (model overloaded)."""
+    with respx.mock(assert_all_mocked=False, assert_all_called=False) as router:
+        router.post("http://localhost:11434/api/chat").mock(
+            return_value=httpx.Response(
+                200,
+                json={"error": "model is busy, please try again later"},
+            )
+        )
+        yield router
+
+
+@pytest.fixture
 def make_job():
     """Factory to create a Job with optional custom page statuses."""
 
@@ -135,6 +149,7 @@ async def app_client(tmp_path: Path, monkeypatch):
         ocr_retries=1,
         ocr_workers=2,
         render_queue_size=4,
+        max_image_dimension=0,
         sse_ring_buffer_size=50,
     )
 

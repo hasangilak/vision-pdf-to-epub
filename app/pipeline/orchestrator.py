@@ -56,7 +56,12 @@ async def run_pipeline(
     async def producer():
         """Render PDF pages and put them on the queue."""
         try:
-            async for page_num, jpeg_bytes in render_pages(pdf_path):
+            async for page_num, jpeg_bytes in render_pages(
+                pdf_path,
+                dpi=job.render_dpi or settings.render_dpi,
+                jpeg_quality=job.jpeg_quality or settings.jpeg_quality,
+                max_image_dimension=settings.max_image_dimension,
+            ):
                 if pages_to_process is not None and page_num not in pages_to_process:
                     continue
                 await image_queue.put((page_num, jpeg_bytes))

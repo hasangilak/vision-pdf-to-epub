@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { uploadPdf } from "@/lib/api";
+import { type QualityPreset, uploadPdf } from "@/lib/api";
 
 interface UploadZoneProps {
   onStartUpload: () => void;
@@ -20,6 +20,7 @@ interface UploadZoneProps {
 export function UploadZone({ onStartUpload, onJobCreated }: UploadZoneProps) {
   const [file, setFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("fa");
+  const [quality, setQuality] = useState<QualityPreset>("balanced");
   const [ocrPrompt, setOcrPrompt] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -51,13 +52,13 @@ export function UploadZone({ onStartUpload, onJobCreated }: UploadZoneProps) {
     setError(null);
     onStartUpload();
     try {
-      const res = await uploadPdf(file, language, ocrPrompt || undefined);
+      const res = await uploadPdf(file, language, ocrPrompt || undefined, quality);
       onJobCreated(res.job_id, res.total_pages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
     }
-  }, [file, language, ocrPrompt, onStartUpload, onJobCreated]);
+  }, [file, language, quality, ocrPrompt, onStartUpload, onJobCreated]);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -125,6 +126,21 @@ export function UploadZone({ onStartUpload, onJobCreated }: UploadZoneProps) {
               <SelectItem value="fa">Persian (فارسی)</SelectItem>
               <SelectItem value="ar">Arabic (العربية)</SelectItem>
               <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Processing Speed */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Processing Speed</label>
+          <Select value={quality} onValueChange={(v) => setQuality(v as QualityPreset)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">High Quality (300 DPI)</SelectItem>
+              <SelectItem value="balanced">Balanced (200 DPI)</SelectItem>
+              <SelectItem value="fast">Fast (150 DPI)</SelectItem>
             </SelectContent>
           </Select>
         </div>
