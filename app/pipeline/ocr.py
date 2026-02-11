@@ -62,17 +62,19 @@ async def ocr_page(
                     )
             except (httpx.HTTPError, RuntimeError) as exc:
                 last_error = exc
+                err_msg = str(exc) or f"{type(exc).__name__} (no detail)"
                 wait = 2**attempt
                 logger.warning(
                     "OCR attempt %d failed: %s. Retrying in %ds...",
                     attempt + 1,
-                    exc,
+                    err_msg,
                     wait,
                 )
                 await asyncio.sleep(wait)
 
+        err_detail = str(last_error) or f"{type(last_error).__name__} (no detail)"
         raise RuntimeError(
-            f"OCR failed after {settings.ocr_retries} attempts: {last_error}"
+            f"OCR failed after {settings.ocr_retries} attempts: {err_detail}"
         )
     finally:
         if own_client:
